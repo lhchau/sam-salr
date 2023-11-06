@@ -102,13 +102,7 @@ def train(epoch):
         
         # scheduler step
         sharpness = second_loss - first_loss
-        scheduler(sharpness, epoch)
-        
-        # wandb log learning rate
-        curr_lr = scheduler.lr()
-        wandb.log({
-            'lr': curr_lr
-        })
+        scheduler.sharpness_step.append(sharpness)
         
         train_loss += first_loss.item()
         _, predicted = outputs.max(1)
@@ -120,9 +114,12 @@ def train(epoch):
         progress_bar(batch_idx, len(train_dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                      % (train_loss_mean, acc, correct, total))
         
+    # wandb log learning rate
+    curr_lr = scheduler.lr()
     wandb.log({
         'train/loss': train_loss_mean,
         'train/acc': acc,
+        'lr': curr_lr,
         'epoch': epoch
         })
 
@@ -201,6 +198,7 @@ if __name__ == "__main__":
     for epoch in range(start_epoch, start_epoch+EPOCHS):
         train(epoch)
         val(epoch)
+        scheduler(epoch)
     test()
     
         

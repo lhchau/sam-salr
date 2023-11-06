@@ -10,9 +10,10 @@ class SALR:
         self.optimizer = optimizer
         self.base = learning_rate
         self.total_epochs = total_epochs
+        self.sharpness_step = []
         self.sharpness_history = []
 
-    def __call__(self, sharpness, epoch):
+    def __call__(self, epoch):
         if epoch < self.total_epochs * 3/10:
             lr = self.base
         elif epoch < self.total_epochs * 6/10:
@@ -21,8 +22,13 @@ class SALR:
             lr = self.base * 0.2 ** 2
         else:
             lr = self.base * 0.2 ** 3
-        self.sharpness_history.append(sharpness)
-        alpha = (sharpness + 1e-12) / (torch.median(torch.tensor(self.sharpness_history)) + 1e-12)
+            
+        sharpness_epoch = torch.mean((torch.tensor(self.sharpness_step)))
+        self.sharpness_history.append(sharpness_epoch)
+        alpha = (sharpness_epoch + 1e-12) / (torch.median(torch.tensor(self.sharpness_history)) + 1e-12)
+        # Reset sharpness_step
+        self.sharpness_step = []
+        
         for param_group in self.optimizer.param_groups:
             param_group["lr"] = lr * alpha 
 
