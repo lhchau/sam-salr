@@ -1,5 +1,4 @@
 checkpoint
-assets
 data/cifar-10*
 __pycache__
 sam_salr.egg-info
